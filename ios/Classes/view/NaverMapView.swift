@@ -12,27 +12,47 @@ internal class NaverMapView: NSObject, FlutterPlatformView {
         naverMapControlSender = NaverMapController(naverMap: naverMap, channel: channel, overlayController: overlayController)
         super.init()
 
-        naverMapViewOptions.updateWithNaverMapView(naverMap: naverMap, isFirst: true)
-        onMapReady()
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.naverMapViewOptions.updateWithNaverMapView(naverMap: self.naverMap, isFirst: true)
+            self.onMapReady()
+        }
     }
 
     private func onMapReady() {
-        setMapTapListener()
-        naverMapControlSender.onMapReady()
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.setMapTapListener()
+            self.naverMapControlSender.onMapReady()
+        }
     }
 
     private func setMapTapListener() {
-        eventDelegate = NaverMapViewEventDelegate(sender: naverMapControlSender,
-                initializeConsumeSymbolTapEvents: naverMapViewOptions.consumeSymbolTapEvents)
-        eventDelegate.registerDelegates(mapView: naverMap.mapView)
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.eventDelegate = NaverMapViewEventDelegate(sender: self.naverMapControlSender,
+                    initializeConsumeSymbolTapEvents: self.naverMapViewOptions.consumeSymbolTapEvents)
+            self.eventDelegate.registerDelegates(mapView: self.naverMap.mapView)
+        }
     }
 
     func view() -> UIView {
-        naverMap
+        var view: UIView!
+        if Thread.isMainThread {
+            view = naverMap
+        } else {
+            DispatchQueue.main.sync {
+                view = naverMap
+            }
+        }
+        return view
     }
 
     deinit {
-        (naverMapControlSender as! NaverMapController).removeChannel()
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            (self.naverMapControlSender as! NaverMapController).removeChannel()
+        }
     }
 }
 

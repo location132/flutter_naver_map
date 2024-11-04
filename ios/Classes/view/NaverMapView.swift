@@ -12,47 +12,27 @@ internal class NaverMapView: NSObject, FlutterPlatformView {
         naverMapControlSender = NaverMapController(naverMap: naverMap, channel: channel, overlayController: overlayController)
         super.init()
 
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            self.naverMapViewOptions.updateWithNaverMapView(naverMap: self.naverMap, isFirst: true)
-            self.onMapReady()
-        }
+        naverMapViewOptions.updateWithNaverMapView(naverMap: naverMap, isFirst: true)
+        onMapReady()
     }
 
     private func onMapReady() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            self.setMapTapListener()
-            self.naverMapControlSender.onMapReady()
-        }
+        setMapTapListener()
+        naverMapControlSender.onMapReady()
     }
 
     private func setMapTapListener() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            self.eventDelegate = NaverMapViewEventDelegate(sender: self.naverMapControlSender,
-                    initializeConsumeSymbolTapEvents: self.naverMapViewOptions.consumeSymbolTapEvents)
-            self.eventDelegate.registerDelegates(mapView: self.naverMap.mapView)
-        }
+        eventDelegate = NaverMapViewEventDelegate(sender: naverMapControlSender,
+                initializeConsumeSymbolTapEvents: naverMapViewOptions.consumeSymbolTapEvents)
+        eventDelegate.registerDelegates(mapView: naverMap.mapView)
     }
 
     func view() -> UIView {
-        var view: UIView!
-        if Thread.isMainThread {
-            view = naverMap
-        } else {
-            DispatchQueue.main.sync {
-                view = naverMap
-            }
-        }
-        return view
+        naverMap
     }
 
     deinit {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            (self.naverMapControlSender as! NaverMapController).removeChannel()
-        }
+        (naverMapControlSender as! NaverMapController).removeChannel()
     }
 }
 
